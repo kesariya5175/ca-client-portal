@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import ExportButton from './ExportButton'
+
+const TASK_EXPORT_COLS = [
+  { key: 'title', label: 'Task' }, { key: 'client_name', label: 'Client' },
+  { key: 'assigned_name', label: 'Assigned To' }, { key: 'due_date', label: 'Due Date' },
+  { key: 'priority', label: 'Priority' }, { key: 'status', label: 'Status' },
+]
 
 const PRIORITIES = ['Low', 'Medium', 'High']
 const STATUSES   = ['pending', 'in_progress', 'done']
@@ -157,7 +164,13 @@ export default function TasksTab({ profile }) {
 
       <div className="page-header">
         <h2>Tasks</h2>
-        <button className="btn btn-primary" onClick={() => setModal('add')}>+ Add Task</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <ExportButton
+            data={filtered.map(t => ({ ...t, client_name: t.clients?.name, assigned_name: t.users?.name }))}
+            filename="tasks" title="Task List" columns={TASK_EXPORT_COLS}
+          />
+          <button className="btn btn-primary" onClick={() => setModal('add')}>+ Add Task</button>
+        </div>
       </div>
 
       <div className="card">

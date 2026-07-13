@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import ClientServicesModal from './ClientServicesModal'
+import ExportButton from './ExportButton'
+
+const CLIENT_EXPORT_COLS = [
+  { key: 'name', label: 'Name' }, { key: 'type', label: 'Type' },
+  { key: 'pan', label: 'PAN' }, { key: 'phone', label: 'Phone' },
+  { key: 'email', label: 'Email' }, { key: 'gst', label: 'GST' },
+  { key: 'status', label: 'Status' },
+]
 
 const TYPES = ['Individual', 'Company', 'Partnership', 'LLP', 'HUF', 'Trust']
 
@@ -99,6 +108,7 @@ export default function ClientsTab({ profile, isAdmin }) {
   const [loading, setLoading]   = useState(true)
   const [search, setSearch]     = useState('')
   const [modal, setModal]       = useState(null)   // null | 'add' | client-object
+  const [servicesModal, setServicesModal] = useState(null)  // null | client-object
 
   async function load() {
     setLoading(true)
@@ -127,6 +137,14 @@ export default function ClientsTab({ profile, isAdmin }) {
 
   return (
     <div className="page">
+      {servicesModal && (
+        <ClientServicesModal
+          client={servicesModal}
+          firmId={profile.firm_id}
+          onClose={() => setServicesModal(null)}
+        />
+      )}
+
       {modal && (
         <ClientModal
           firmId={profile.firm_id}
@@ -138,7 +156,10 @@ export default function ClientsTab({ profile, isAdmin }) {
 
       <div className="page-header">
         <h2>Clients</h2>
-        <button className="btn btn-primary" onClick={() => setModal('add')}>+ Add Client</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <ExportButton data={filtered} filename="clients" title="Client List" columns={CLIENT_EXPORT_COLS} />
+          <button className="btn btn-primary" onClick={() => setModal('add')}>+ Add Client</button>
+        </div>
       </div>
 
       <div className="card">
@@ -182,6 +203,7 @@ export default function ClientsTab({ profile, isAdmin }) {
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: 6 }}>
+                            <button className="btn btn-primary btn-sm" onClick={() => setServicesModal(c)}>Services</button>
                             <button className="btn btn-ghost btn-sm" onClick={() => setModal(c)}>Edit</button>
                             <button className="btn btn-ghost btn-sm" onClick={() => toggleStatus(c)}>
                               {c.status === 'active' ? 'Deactivate' : 'Activate'}

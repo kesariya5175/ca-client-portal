@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import ExportButton from './ExportButton'
+
+const INVOICE_EXPORT_COLS = [
+  { key: 'client_name', label: 'Client' }, { key: 'description', label: 'Description' },
+  { key: 'date', label: 'Date' }, { key: 'amount', label: 'Amount (₹)' },
+  { key: 'paid', label: 'Paid' },
+]
 
 function InvoiceModal({ firmId, clients, invoice, onClose, onSaved }) {
   const isEdit = !!invoice
@@ -116,7 +123,13 @@ export default function BillingTab({ profile }) {
 
       <div className="page-header">
         <h2>Billing</h2>
-        <button className="btn btn-primary" onClick={() => setModal('add')}>+ Add Invoice</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <ExportButton
+            data={filtered.map(i => ({ ...i, client_name: i.clients?.name, paid: i.paid ? 'Yes' : 'No' }))}
+            filename="invoices" title="Invoice List" columns={INVOICE_EXPORT_COLS}
+          />
+          <button className="btn btn-primary" onClick={() => setModal('add')}>+ Add Invoice</button>
+        </div>
       </div>
 
       {/* Summary */}

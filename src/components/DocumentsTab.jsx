@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { emailDocumentRequest } from '../emailService'
 
 const DOC_CATEGORIES = ['ITR Documents', 'GST Documents', 'Audit Documents', 'TDS Documents', 'Company Documents', 'Other']
 
@@ -14,6 +15,19 @@ function RequestModal({ firmId, clients, onClose, onSaved }) {
     setSaving(true); setError('')
     const { error: err } = await supabase.from('doc_requests').insert({ ...form, firm_id: firmId, status: 'pending' })
     if (err) { setError(err.message); setSaving(false); return }
+
+    // Send email to client if they have an email address
+    const client = clients.find(c => c.id === form.client_id)
+    if (client?.email) {
+      const { data: firm } = await supabase.from('firms').select('name').eq('id', firmId).single()
+      emailDocumentRequest({
+        clientEmail: client.email,
+        clientName: client.name,
+        requestTitle: form.title,
+        firmName: firm?.name ?? 'Your CA Firm',
+      }).catch(() => {}) // fire and forget — don't block on email failure
+    }
+
     onSaved()
   }
 
