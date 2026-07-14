@@ -144,7 +144,7 @@ export default function DocumentsTab({ profile }) {
         .match(isClient ? { client_id: profile.client_id } : {})
         .order('created_at', { ascending: false }),
       isClient ? { data: [] } :
-        supabase.from('clients').select('id,name').eq('firm_id', profile.firm_id).eq('status', 'active').order('name'),
+        supabase.from('clients').select('id,name,email').eq('firm_id', profile.firm_id).eq('status', 'active').order('name'),
     ])
     setRequests(reqRes.data ?? [])
     setClients(cliRes.data ?? [])

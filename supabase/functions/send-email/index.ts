@@ -39,7 +39,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'CA Portal <noreply@yourcadomain.com>',  // Replace with your verified Resend domain
+        from: 'CA Portal <onboarding@resend.dev>',
         to: [to],
         subject,
         html,
