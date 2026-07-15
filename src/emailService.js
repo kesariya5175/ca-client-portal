@@ -68,6 +68,30 @@ export async function emailTaskOverdue({ staffEmail, taskTitle, clientName, dueD
   })
 }
 
+export async function emailDocumentReminder({ clientEmail, clientName, documentName, serviceName, financialYear, firmName }) {
+  return sendEmail({
+    to: clientEmail,
+    subject: `[Reminder] Document Pending: ${documentName} — ${serviceName}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
+        <h2 style="color:#d97706">Document Pending — Reminder</h2>
+        <p>Dear ${clientName},</p>
+        <p>This is a gentle reminder that the following document is still pending from you:</p>
+        <div style="background:#fef3c7;border-radius:8px;padding:14px 18px;margin:16px 0">
+          <div style="font-weight:600;font-size:15px">${documentName}</div>
+          <div style="margin-top:4px;color:#78350f;font-size:13px">Service: ${serviceName}${financialYear ? ` (${financialYear})` : ''}</div>
+        </div>
+        <p>Please log in to the CA Client Portal to upload this document at your earliest convenience.</p>
+        <a href="${import.meta.env.VITE_APP_URL ?? 'https://ca-client-portal-yr7e.vercel.app'}"
+           style="display:inline-block;background:#1a56db;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;margin-top:8px">
+          Upload Document →
+        </a>
+        <p style="margin-top:24px;color:#6b7280;font-size:13px">CA Client Portal · ${firmName}</p>
+      </div>
+    `
+  })
+}
+
 export async function emailServiceStatusUpdate({ clientEmail, clientName, serviceName, newStatus, notes, firmName }) {
   return sendEmail({
     to: clientEmail,
