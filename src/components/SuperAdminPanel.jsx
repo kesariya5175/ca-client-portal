@@ -155,6 +155,13 @@ export default function SuperAdminPanel() {
     setFirms(fs => fs.map(f => f.id === firm.id ? { ...f, disabled: newDisabled } : f))
   }
 
+  async function togglePlan(firm) {
+    const newPlan = firm.plan === 'pro' ? 'free' : 'pro'
+    if (!confirm(`Switch ${firm.name} to ${newPlan.toUpperCase()} plan?`)) return
+    await callAdmin('toggle_plan', { firmId: firm.id, plan: newPlan })
+    setFirms(fs => fs.map(f => f.id === firm.id ? { ...f, plan: newPlan } : f))
+  }
+
   function handleCreated(formData) {
     setModal(null)
     setSuccessMsg(`✓ Firm "${formData.firmName}" created. Login: ${formData.adminEmail} / ${formData.adminPassword}`)
@@ -212,9 +219,16 @@ export default function SuperAdminPanel() {
                     {new Date(firm.created_at).toLocaleDateString('en-IN')}
                   </td>
                   <td style={{ padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <button className="btn btn-ghost btn-sm" onClick={() => setModal({ type: 'reset', firm })}>
                         Reset Password
+                      </button>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        style={{ color: firm.plan === 'pro' ? '#92400e' : '#1d4ed8' }}
+                        onClick={() => togglePlan(firm)}
+                      >
+                        {firm.plan === 'pro' ? '↓ Downgrade' : '↑ Upgrade to Pro'}
                       </button>
                       <button
                         className="btn btn-ghost btn-sm"

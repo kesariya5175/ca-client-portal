@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import ExportButton from './ExportButton'
 import { emailTaskOverdue } from '../emailService'
+import { getPlan } from '../planUtils'
 
 const TASK_EXPORT_COLS = [
   { key: 'title', label: 'Task' }, { key: 'client_name', label: 'Client' },
@@ -100,6 +101,7 @@ function TaskModal({ firmId, clients, staff, task, onClose, onSaved }) {
 }
 
 export default function TasksTab({ profile }) {
+  const plan = getPlan(profile.firms)
   const [tasks, setTasks]   = useState([])
   const [clients, setClients] = useState([])
   const [staff, setStaff]   = useState([])
@@ -180,10 +182,12 @@ export default function TasksTab({ profile }) {
       <div className="page-header">
         <h2>Tasks</h2>
         <div style={{ display: 'flex', gap: 8 }}>
-          <ExportButton
-            data={filtered.map(t => ({ ...t, client_name: t.clients?.name, assigned_name: t.users?.name }))}
-            filename="tasks" title="Task List" columns={TASK_EXPORT_COLS}
-          />
+          {plan.export && (
+            <ExportButton
+              data={filtered.map(t => ({ ...t, client_name: t.clients?.name, assigned_name: t.users?.name }))}
+              filename="tasks" title="Task List" columns={TASK_EXPORT_COLS}
+            />
+          )}
           <button className="btn btn-primary" onClick={() => setModal('add')}>+ Add Task</button>
         </div>
       </div>

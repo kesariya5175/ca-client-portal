@@ -104,6 +104,17 @@ serve(async (req) => {
     return json({ success: true })
   }
 
+  if (action === 'toggle_plan') {
+    const { firmId, plan } = payload
+    if (!['free', 'pro'].includes(plan)) return json({ error: 'Invalid plan' }, 400)
+    const { error } = await admin
+      .from('firms')
+      .update({ plan })
+      .eq('id', firmId)
+    if (error) return json({ error: error.message }, 500)
+    return json({ success: true })
+  }
+
   if (action === 'reset_password') {
     const { adminEmail, newPassword } = payload
     // Find auth user by email

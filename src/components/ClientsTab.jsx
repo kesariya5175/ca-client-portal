@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import ClientServicesModal from './ClientServicesModal'
 import ExportButton from './ExportButton'
+import { getPlan } from '../planUtils'
 
 const CLIENT_EXPORT_COLS = [
   { key: 'name', label: 'Name' }, { key: 'type', label: 'Type' },
@@ -110,6 +111,11 @@ export default function ClientsTab({ profile, isAdmin }) {
   const [modal, setModal]       = useState(null)   // null | 'add' | client-object
   const [servicesModal, setServicesModal] = useState(null)  // null | client-object
 
+  const plan = getPlan(profile.firms)
+  const activeCount = clients.filter(c => c.status === 'active').length
+  const atLimit = !plan.export === false && activeCount >= plan.maxClients  // reuse plan object
+  const overLimit = activeCount >= plan.maxClients && plan.key === 'free'
+
   async function load() {
     setLoading(true)
     const { data } = await supabase
@@ -155,12 +161,37 @@ export default function ClientsTab({ profile, isAdmin }) {
       )}
 
       <div className="page-header">
-        <h2>Clients</h2>
+        <div>
+          <h2>Clients</h2>
+          <span className="text-muted text-sm">
+            {activeCount} active
+            {plan.key === 'free' && ` / ${plan.maxClients} (Free plan)`}
+          </span>
+        </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <ExportButton data={filtered} filename="clients" title="Client List" columns={CLIENT_EXPORT_COLS} />
-          <button className="btn btn-primary" onClick={() => setModal('add')}>+ Add Client</button>
+          {plan.export && (
+            <ExportButton data={filtered} filename="clients" title="Client List" columns={CLIENT_EXPORT_COLS} />
+          )}
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              if (overLimit) {
+                alert(`You've reached the Free plan limit of ${plan.maxClients} active clients. Ask your super admin to upgrade to Pro for unlimited clients.`)
+                return
+              }
+              setModal('add')
+            }}
+          >
+            + Add Client
+          </button>
         </div>
       </div>
+
+      {overLimit && (
+        <div className="alert" style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d', marginBottom: 16 }}>
+          ⚠ You've reached the <strong>Free plan limit of {plan.maxClients} clients</strong>. Contact your super admin to upgrade to Pro for unlimited clients.
+        </div>
+      )}
 
       <div className="card">
         <div style={{ marginBottom: 14 }}>

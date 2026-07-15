@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { getPlan, PLANS } from '../planUtils'
 
 const SERVICE_DEFAULTS = ['ITR Filing', 'GST Monthly Return', 'GST Quarterly Return', 'Tax Audit', 'Company Audit', 'TDS Filing', 'Company Registration', 'Other']
 
@@ -115,6 +116,7 @@ export default function SettingsTab({ profile }) {
       <div className="tabs">
         <button className={`tab-btn ${activeTab === 'team' ? 'active' : ''}`} onClick={() => setActiveTab('team')}>Team & Users</button>
         <button className={`tab-btn ${activeTab === 'firm' ? 'active' : ''}`} onClick={() => setActiveTab('firm')}>Firm Profile</button>
+        <button className={`tab-btn ${activeTab === 'plan' ? 'active' : ''}`} onClick={() => setActiveTab('plan')}>Plan</button>
       </div>
 
       {activeTab === 'team' && (
@@ -158,6 +160,65 @@ export default function SettingsTab({ profile }) {
           <FirmSettings profile={profile} />
         </div>
       )}
+
+      {activeTab === 'plan' && (
+        <PlanInfo profile={profile} />
+      )}
+    </div>
+  )
+}
+
+function PlanInfo({ profile }) {
+  const plan = getPlan(profile.firms)
+  const isPro = plan.key === 'pro'
+
+  function Feature({ enabled, label }) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--gray-100)' }}>
+        <span style={{ color: enabled ? '#16a34a' : '#9ca3af', fontSize: 16 }}>{enabled ? '✓' : '✕'}</span>
+        <span style={{ color: enabled ? 'var(--gray-800)' : 'var(--gray-400)', fontSize: 14 }}>{label}</span>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ maxWidth: 480 }}>
+      {/* Current plan badge */}
+      <div className="card" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 13, color: 'var(--gray-500)', marginBottom: 4 }}>Current Plan</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: isPro ? '#1d4ed8' : 'var(--gray-700)' }}>
+            {isPro ? '⭐ Pro' : 'Free'}
+          </div>
+        </div>
+        <span style={{
+          background: isPro ? '#dbeafe' : 'var(--gray-100)',
+          color: isPro ? '#1d4ed8' : 'var(--gray-600)',
+          padding: '4px 14px', borderRadius: 99, fontSize: 13, fontWeight: 600
+        }}>
+          {isPro ? 'ACTIVE' : 'LIMITED'}
+        </span>
+      </div>
+
+      {/* Feature comparison */}
+      <div className="card">
+        <h3 style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>What's included</h3>
+        <Feature enabled={true}  label="Unlimited tasks & invoices" />
+        <Feature enabled={true}  label="Email notifications to clients" />
+        <Feature enabled={true}  label="Client portal access" />
+        <Feature enabled={true}  label="Firm notices & announcements" />
+        <Feature enabled={isPro} label={`Up to ${isPro ? 'unlimited' : PLANS.free.maxClients} active clients`} />
+        <Feature enabled={isPro} label="Export to CSV / PDF" />
+
+        {!isPro && (
+          <div style={{ marginTop: 16, padding: 14, background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+            <div style={{ fontWeight: 600, color: '#1d4ed8', marginBottom: 4 }}>Upgrade to Pro</div>
+            <div style={{ fontSize: 13, color: '#1e40af' }}>
+              Contact your super admin to upgrade your firm to Pro for unlimited clients and export features.
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import ExportButton from './ExportButton'
+import { getPlan } from '../planUtils'
 
 const INVOICE_EXPORT_COLS = [
   { key: 'client_name', label: 'Client' }, { key: 'description', label: 'Description' },
@@ -78,6 +79,7 @@ function InvoiceModal({ firmId, clients, invoice, onClose, onSaved }) {
 }
 
 export default function BillingTab({ profile }) {
+  const plan = getPlan(profile.firms)
   const [invoices, setInvoices] = useState([])
   const [clients, setClients]   = useState([])
   const [loading, setLoading]   = useState(true)
@@ -124,10 +126,12 @@ export default function BillingTab({ profile }) {
       <div className="page-header">
         <h2>Billing</h2>
         <div style={{ display: 'flex', gap: 8 }}>
-          <ExportButton
-            data={filtered.map(i => ({ ...i, client_name: i.clients?.name, paid: i.paid ? 'Yes' : 'No' }))}
-            filename="invoices" title="Invoice List" columns={INVOICE_EXPORT_COLS}
-          />
+          {plan.export && (
+            <ExportButton
+              data={filtered.map(i => ({ ...i, client_name: i.clients?.name, paid: i.paid ? 'Yes' : 'No' }))}
+              filename="invoices" title="Invoice List" columns={INVOICE_EXPORT_COLS}
+            />
+          )}
           <button className="btn btn-primary" onClick={() => setModal('add')}>+ Add Invoice</button>
         </div>
       </div>
