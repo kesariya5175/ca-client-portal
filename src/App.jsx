@@ -11,8 +11,20 @@ import NoticesTab     from './components/NoticesTab'
 import SettingsTab    from './components/SettingsTab'
 import ClientStatusTab from './components/ClientStatusTab'
 import SuperAdminPanel from './components/SuperAdminPanel'
+import SuperAdminLayout from './components/SuperAdminLayout'
+import SuperAdminBilling from './components/SuperAdminBilling'
 import ClientBillingTab from './components/ClientBillingTab'
 import { expiryStatus, daysRemaining, formatExpiry } from './planUtils'
+
+function SuperAdminShell({ profile, onSignOut }) {
+  const [tab, setTab] = useState('firms')
+  return (
+    <SuperAdminLayout profile={profile} activeTab={tab} onTabChange={setTab} onSignOut={onSignOut}>
+      {tab === 'firms'   && <SuperAdminPanel />}
+      {tab === 'billing' && <SuperAdminBilling />}
+    </SuperAdminLayout>
+  )
+}
 
 export default function App() {
   const { user, profile, loading, signIn, signOut, isClient, isSuperAdmin } = useAuth()
@@ -55,13 +67,9 @@ export default function App() {
     )
   }
 
-  // Super admin gets their own dedicated panel
+  // Super admin gets its own layout and nav
   if (isSuperAdmin) {
-    return (
-      <Layout profile={profile} activeTab="super-admin" onTabChange={() => {}} onSignOut={signOut}>
-        <SuperAdminPanel />
-      </Layout>
-    )
+    return <SuperAdminShell profile={profile} onSignOut={signOut} />
   }
 
   function renderTab() {

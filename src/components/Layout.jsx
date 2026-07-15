@@ -1,5 +1,6 @@
 // Shared shell: sidebar nav + top bar
 import { useState } from 'react'
+import { daysRemaining, expiryStatus } from '../planUtils'
 
 const CA_NAV = [
   { key: 'dashboard',  label: 'Dashboard',  icon: '📊' },
@@ -57,9 +58,20 @@ export default function Layout({ profile, activeTab, onTabChange, onSignOut, chi
               <div style={{ color: '#fff', fontWeight: 600, fontSize: 13, lineHeight: 1.2 }}>
                 {profile?.firms?.name || 'CA Portal'}
               </div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 1 }}>
-                {profile?.firms?.plan === 'pro' ? 'Pro Plan' : 'Free Plan'}
-              </div>
+              {!isClient && (() => {
+                const days   = daysRemaining(profile?.firms)
+                const status = expiryStatus(profile?.firms)
+                const planLabel = profile?.firms?.plan === 'pro' ? '⭐ Pro' : 'Free Trial'
+                const expiryColor = status === 'expired' ? '#fca5a5' : status === 'expiring-soon' ? '#fcd34d' : 'rgba(255,255,255,0.4)'
+                return (
+                  <div style={{ fontSize: 11, marginTop: 1, color: expiryColor }}>
+                    {planLabel}{days !== null ? ` · ${days < 0 ? 'Expired' : `${days}d left`}` : ''}
+                  </div>
+                )
+              })()}
+              {isClient && (
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 1 }}>Client</div>
+              )}
             </div>
           </div>
         </div>
