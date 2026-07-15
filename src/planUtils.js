@@ -1,8 +1,8 @@
-// Plan limits and feature checks
+// Plan limits, feature checks, and subscription expiry
 
 export const PLANS = {
   free: {
-    name: 'Free',
+    name: 'Free Trial',
     maxClients: 10,
     export: false,
   },
@@ -20,4 +20,27 @@ export function getPlan(firms) {
 
 export function isPro(firms) {
   return firms?.plan === 'pro'
+}
+
+// Returns days remaining until expiry. Negative = expired.
+export function daysRemaining(firms) {
+  if (!firms?.plan_expires_at) return null
+  const diff = new Date(firms.plan_expires_at) - new Date()
+  return Math.ceil(diff / 86400000)
+}
+
+// Returns expiry status
+export function expiryStatus(firms) {
+  const days = daysRemaining(firms)
+  if (days === null) return 'no-expiry'
+  if (days < 0)  return 'expired'
+  if (days <= 7) return 'expiring-soon'
+  return 'active'
+}
+
+export function formatExpiry(firms) {
+  if (!firms?.plan_expires_at) return null
+  return new Date(firms.plan_expires_at).toLocaleDateString('en-IN', {
+    day: '2-digit', month: 'short', year: 'numeric'
+  })
 }

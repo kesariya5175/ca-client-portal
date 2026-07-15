@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { getPlan, PLANS } from '../planUtils'
+import { getPlan, PLANS, daysRemaining, expiryStatus, formatExpiry } from '../planUtils'
 
 const SERVICE_DEFAULTS = ['ITR Filing', 'GST Monthly Return', 'GST Quarterly Return', 'Tax Audit', 'Company Audit', 'TDS Filing', 'Company Registration', 'Other']
 
@@ -169,8 +169,19 @@ export default function SettingsTab({ profile }) {
 }
 
 function PlanInfo({ profile }) {
-  const plan = getPlan(profile.firms)
-  const isPro = plan.key === 'pro'
+  const plan    = getPlan(profile.firms)
+  const isPro   = plan.key === 'pro'
+  const days    = daysRemaining(profile.firms)
+  const status  = expiryStatus(profile.firms)
+  const expiry  = formatExpiry(profile.firms)
+
+  const expiryColors = {
+    'active':        { bg: '#d1fae5', color: '#065f46', text: `Active — expires ${expiry}` },
+    'expiring-soon': { bg: '#fef3c7', color: '#92400e', text: `⚡ Expires in ${days} days (${expiry})` },
+    'expired':       { bg: '#fde8e8', color: '#c81e1e', text: `⚠ Expired on ${expiry}` },
+    'no-expiry':     { bg: 'var(--gray-100)', color: 'var(--gray-600)', text: 'No expiry set' },
+  }
+  const ec = expiryColors[status]
 
   function Feature({ enabled, label }) {
     return (
@@ -183,26 +194,40 @@ function PlanInfo({ profile }) {
 
   return (
     <div style={{ maxWidth: 480 }}>
-      {/* Current plan badge */}
-      <div className="card" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontSize: 13, color: 'var(--gray-500)', marginBottom: 4 }}>Current Plan</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: isPro ? '#1d4ed8' : 'var(--gray-700)' }}>
-            {isPro ? '⭐ Pro' : 'Free'}
+      {/* Current plan + expiry */}
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--gray-500)', marginBottom: 4 }}>Current Plan</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: isPro ? '#1d4ed8' : 'var(--gray-700)' }}>
+              {isPro ? '⭐ Pro' : 'Free Trial'}
+            </div>
           </div>
+          <span style={{
+            background: isPro ? '#dbeafe' : 'var(--gray-100)',
+            color: isPro ? '#1d4ed8' : 'var(--gray-600)',
+            padding: '4px 14px', borderRadius: 99, fontSize: 13, fontWeight: 600
+          }}>
+            {isPro ? 'PRO' : 'FREE'}
+          </span>
         </div>
-        <span style={{
-          background: isPro ? '#dbeafe' : 'var(--gray-100)',
-          color: isPro ? '#1d4ed8' : 'var(--gray-600)',
-          padding: '4px 14px', borderRadius: 99, fontSize: 13, fontWeight: 600
-        }}>
-          {isPro ? 'ACTIVE' : 'LIMITED'}
-        </span>
+
+        {expiry && (
+          <div style={{ background: ec.bg, color: ec.color, padding: '8px 12px', borderRadius: 6, fontSize: 13, fontWeight: 500 }}>
+            {ec.text}
+          </div>
+        )}
+
+        {status === 'expired' && (
+          <div style={{ marginTop: 10, padding: 12, background: '#fde8e8', borderRadius: 6, border: '1px solid #fca5a5', fontSize: 13, color: '#991b1b' }}>
+            Your subscription has expired. Please contact your CA portal admin to renew.
+          </div>
+        )}
       </div>
 
       {/* Feature comparison */}
       <div className="card">
-        <h3 style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>What's included</h3>
+        <h3 style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>What's included in your plan</h3>
         <Feature enabled={true}  label="Unlimited tasks & invoices" />
         <Feature enabled={true}  label="Email notifications to clients" />
         <Feature enabled={true}  label="Client portal access" />
@@ -214,7 +239,7 @@ function PlanInfo({ profile }) {
           <div style={{ marginTop: 16, padding: 14, background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe' }}>
             <div style={{ fontWeight: 600, color: '#1d4ed8', marginBottom: 4 }}>Upgrade to Pro</div>
             <div style={{ fontSize: 13, color: '#1e40af' }}>
-              Contact your super admin to upgrade your firm to Pro for unlimited clients and export features.
+              Contact your CA portal admin to upgrade to Pro for unlimited clients, full exports, and no expiry.
             </div>
           </div>
         )}

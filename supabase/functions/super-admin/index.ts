@@ -70,10 +70,13 @@ serve(async (req) => {
     })
     if (authErr) return json({ error: authErr.message }, 400)
 
-    // 2. Create firm
+    // 2. Create firm with 30-day free trial
+    const trialExpiry = new Date()
+    trialExpiry.setDate(trialExpiry.getDate() + 30)
+
     const { data: firm, error: firmErr } = await admin
       .from('firms')
-      .insert({ name: firmName, plan: 'free' })
+      .insert({ name: firmName, plan: 'free', plan_expires_at: trialExpiry.toISOString() })
       .select()
       .single()
     if (firmErr) {
@@ -113,6 +116,25 @@ serve(async (req) => {
       .eq('id', firmId)
     if (error) return json({ error: error.message }, 500)
     return json({ success: true })
+  }
+
+  if (action === 'set_subscription') {
+    const { firmId, plan, months, trialDays } = payload
+    if (!['free', 'pro'].includes(plan)) return json({ error: 'Invalid plan' }, 400)
+
+    const expiresAt = new Date()
+    if (plan === 'pro' && months) {
+      expiresAt.setMonth(expiresAt.getMonth() + Number(months))
+    } else if (plan === 'free' && trialDays) {
+      expiresAt.setDate(expiresAt.getDate() + Number(trialDays))
+    }
+
+    const { error } = await admin
+      .from('firms')
+      .update({ plan, plan_expires_at: expiresAt.toISOString() })
+      .eq('id', firmId)
+    if (error) return json({ error: error.message }, 500)
+    return json({ success: true, expiresAt: expiresAt.toISOString() })
   }
 
   if (action === 'reset_password') {

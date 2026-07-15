@@ -12,6 +12,7 @@ import SettingsTab    from './components/SettingsTab'
 import ClientStatusTab from './components/ClientStatusTab'
 import SuperAdminPanel from './components/SuperAdminPanel'
 import ClientBillingTab from './components/ClientBillingTab'
+import { expiryStatus, daysRemaining, formatExpiry } from './planUtils'
 
 export default function App() {
   const { user, profile, loading, signIn, signOut, isClient, isSuperAdmin } = useAuth()
@@ -30,6 +31,28 @@ export default function App() {
 
   if (!user || !profile) {
     return <Login onLogin={signIn} />
+  }
+
+  // Subscription expiry check (non-super-admin, non-client only)
+  const subStatus = expiryStatus(profile.firms)
+  const subDays   = daysRemaining(profile.firms)
+  const subExpiry = formatExpiry(profile.firms)
+
+  if (!isSuperAdmin && profile.role !== 'client' && subStatus === 'expired') {
+    return (
+      <Layout profile={profile} activeTab="" onTabChange={() => {}} onSignOut={signOut}>
+        <div className="page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+          <div className="card" style={{ maxWidth: 440, textAlign: 'center', padding: 32 }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>⏰</div>
+            <h2 style={{ fontWeight: 700, marginBottom: 8, color: '#c81e1e' }}>Subscription Expired</h2>
+            <p style={{ color: 'var(--gray-500)', marginBottom: 20 }}>
+              Your subscription expired on <strong>{subExpiry}</strong>. Please contact your CA portal admin to renew.
+            </p>
+            <button className="btn btn-ghost" onClick={signOut}>Sign Out</button>
+          </div>
+        </div>
+      </Layout>
+    )
   }
 
   // Super admin gets their own dedicated panel
@@ -70,6 +93,11 @@ export default function App() {
 
   return (
     <Layout profile={profile} activeTab={activeTab} onTabChange={setTab} onSignOut={signOut}>
+      {subStatus === 'expiring-soon' && profile.role !== 'client' && !isSuperAdmin && (
+        <div style={{ background: '#fef3c7', color: '#92400e', padding: '10px 24px', fontSize: 13, borderBottom: '1px solid #fcd34d' }}>
+          ⚡ Your subscription expires in <strong>{subDays} days</strong> ({subExpiry}). Contact your CA portal admin to renew.
+        </div>
+      )}
       {renderTab()}
     </Layout>
   )
