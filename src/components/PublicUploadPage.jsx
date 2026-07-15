@@ -142,9 +142,9 @@ export default function PublicUploadPage({ requestId }) {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <div style={{
-            width: 48, height: 48, borderRadius: 12, background: 'var(--brand)',
+            width: 52, height: 52, borderRadius: 14, background: 'var(--brand)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 700, fontSize: 18, margin: '0 auto 12px',
+            color: '#fff', fontWeight: 700, fontSize: 20, margin: '0 auto 10px',
           }}>CA</div>
           <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--gray-800)' }}>
             {firmName || 'CA Client Portal'}
