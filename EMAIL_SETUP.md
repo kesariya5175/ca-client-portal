@@ -5,13 +5,13 @@ Emails are sent via **Resend** (free tier: 100 emails/day) through a Supabase Ed
 ## Step 1 — Get Resend API Key
 1. Sign up at [resend.com](https://resend.com) (free)
 2. Go to API Keys → Create API Key
-3. Copy the key -re_AMxsqKh6_2ab1DPdWvujwx6bzav3swDSc
+3. Copy the key (never paste it here — keep it out of version control)
 
 ## Step 2 — Deploy Edge Function
 In your terminal (from the project folder):
 ```bash
 npx supabase functions deploy send-email --project-ref gigqhlfkikufnuxcbwky
-npx supabase secrets set RESEND_API_KEY=re_AMxsqKh6_2ab1DPdWvujwx6bzav3swDSc --project-ref gigqhlfkikufnuxcbwky
+npx supabase secrets set RESEND_API_KEY=your-key-here --project-ref gigqhlfkikufnuxcbwky
 ```
 
 ## Step 3 — Verify your domain in Resend
