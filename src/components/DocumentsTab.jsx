@@ -402,6 +402,9 @@ function ReminderEditor({ request, onSaved }) {
   const [reminderDays, setDays]     = useState(request.reminder_days ?? 3)
   const [saving, setSaving]         = useState(false)
   const [sending, setSending]       = useState(false)
+  const [sentInfo, setSentInfo]     = useState(null) // { uploadUrl, phone, clientName }
+
+  const APP_URL = import.meta.env.VITE_APP_URL ?? 'https://ca-client-portal-yr7e.vercel.app'
 
   async function saveSettings() {
     setSaving(true)
@@ -414,21 +417,59 @@ function ReminderEditor({ request, onSaved }) {
 
   async function sendNow() {
     setSending(true)
-    const { data: client } = await supabase.from('clients').select('name,email').eq('id', request.client_id).single()
+    const { data: client } = await supabase.from('clients').select('name,email,phone').eq('id', request.client_id).single()
     const { data: firm }   = await supabase.from('firms').select('name').eq('id', request.firm_id).single()
+    const uploadUrl = `${APP_URL}/?upload=${request.id}`
+    const firmName  = firm?.name ?? 'Your CA Firm'
+
     if (client?.email) {
       await emailDocumentReminder({
-        clientEmail: client.email,
-        clientName: client.name,
-        documentName: request.title,
-        serviceName: request.service_name,
+        clientEmail:   client.email,
+        clientName:    client.name,
+        documentName:  request.title,
+        serviceName:   request.service_name,
         financialYear: request.financial_year,
-        firmName: firm?.name ?? 'Your CA Firm',
+        firmName,
+        uploadUrl,
       }).catch(() => {})
       await supabase.from('doc_requests').update({ last_reminder_sent: new Date().toISOString() }).eq('id', request.id)
+      setSentInfo({ uploadUrl, phone: client.phone, clientName: client.name, firmName })
       onSaved()
+    } else {
+      // No email — just show WhatsApp option
+      setSentInfo({ uploadUrl, phone: client?.phone, clientName: client?.name, firmName, noEmail: true })
     }
     setSending(false)
+  }
+
+  function openWhatsApp() {
+    if (!sentInfo?.phone) return
+    const phone  = sentInfo.phone.replace(/\D/g, '')
+    const waPhone = phone.startsWith('91') ? phone : `91${phone}`
+    const svc    = request.service_name && request.service_name !== 'null'
+      ? ` for *${request.service_name}*${request.financial_year ? ` (${request.financial_year})` : ''}`
+      : ''
+    const msg = `Hello ${sentInfo.clientName},\n\nThis is a reminder from *${sentInfo.firmName}* — the following document is still pending${svc}:\n\n📄 *${request.title}*\n\n👆 Click below to upload directly (no login needed):\n${sentInfo.uploadUrl}\n\nThank you!`
+    window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`, '_blank')
+  }
+
+  // After sending — show WhatsApp option
+  if (sentInfo) {
+    return (
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontSize: 11, color: 'var(--success)', fontWeight: 600 }}>
+          {sentInfo.noEmail ? '⚠ No email on file' : '✓ Email sent'}
+        </span>
+        {sentInfo.phone && (
+          <button className="btn btn-whatsapp btn-sm" onClick={openWhatsApp}>
+            📱 WhatsApp
+          </button>
+        )}
+        <button className="btn btn-ghost btn-sm" onClick={() => setSentInfo(null)}>
+          ✕
+        </button>
+      </div>
+    )
   }
 
   if (!open) {
@@ -438,14 +479,14 @@ function ReminderEditor({ request, onSaved }) {
           className="btn btn-ghost btn-sm"
           onClick={sendNow}
           disabled={sending}
-          title="Send manual reminder to client"
+          title="Send reminder email + get WhatsApp link"
         >
           {sending ? '…' : '📧 Remind'}
         </button>
         <button
           className="btn btn-ghost btn-sm"
           onClick={() => setOpen(true)}
-          title="Reminder settings"
+          title="Auto-reminder settings"
           style={{ color: request.auto_reminder ? 'var(--brand)' : undefined }}
         >
           {request.auto_reminder ? `⏰ ${request.reminder_days}d` : '⏰'}
@@ -536,6 +577,7 @@ export default function DocumentsTab({ profile, onViewClient }) {
         const daysSince = (now - lastSent) / 86400000
         if (daysSince >= req.reminder_days && req.clients?.email) {
           const { data: firm } = await supabase.from('firms').select('name').eq('id', profile.firm_id).single()
+          const autoUploadUrl = `${import.meta.env.VITE_APP_URL ?? 'https://ca-client-portal-yr7e.vercel.app'}/?upload=${req.id}`
           emailDocumentReminder({
             clientEmail: req.clients.email,
             clientName: req.clients.name,
@@ -543,6 +585,7 @@ export default function DocumentsTab({ profile, onViewClient }) {
             serviceName: req.service_name,
             financialYear: req.financial_year,
             firmName: firm?.name ?? 'Your CA Firm',
+            uploadUrl: autoUploadUrl,
           }).catch(() => {})
           supabase.from('doc_requests').update({ last_reminder_sent: now.toISOString() }).eq('id', req.id).then(() => {})
         }

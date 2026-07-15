@@ -102,25 +102,38 @@ export async function emailTaskOverdue({ staffEmail, taskTitle, clientName, dueD
   })
 }
 
-export async function emailDocumentReminder({ clientEmail, clientName, documentName, serviceName, financialYear, firmName }) {
+export async function emailDocumentReminder({ clientEmail, clientName, documentName, serviceName, financialYear, firmName, uploadUrl }) {
+  const serviceInfo = serviceName && serviceName !== 'null'
+    ? `${serviceName}${financialYear ? ` (${financialYear})` : ''}`
+    : null
+
   return sendEmail({
     to: clientEmail,
-    subject: `[Reminder] Document Pending: ${documentName} — ${serviceName}`,
+    subject: `[Reminder] Document Pending: ${documentName}${serviceInfo ? ` — ${serviceInfo}` : ''}`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
-        <h2 style="color:#d97706">Document Pending — Reminder</h2>
-        <p>Dear ${clientName},</p>
-        <p>This is a gentle reminder that the following document is still pending from you:</p>
-        <div style="background:#fef3c7;border-radius:8px;padding:14px 18px;margin:16px 0">
-          <div style="font-weight:600;font-size:15px">${documentName}</div>
-          <div style="margin-top:4px;color:#78350f;font-size:13px">Service: ${serviceName}${financialYear ? ` (${financialYear})` : ''}</div>
+        <div style="background:#d97706;border-radius:10px;padding:16px 20px;margin-bottom:20px">
+          <div style="color:#fff;font-weight:700;font-size:16px">⏰ Document Pending — Reminder</div>
+          <div style="color:rgba(255,255,255,0.8);font-size:13px;margin-top:2px">${firmName}</div>
         </div>
-        <p>Please log in to the CA Client Portal to upload this document at your earliest convenience.</p>
-        <a href="${import.meta.env.VITE_APP_URL ?? 'https://ca-client-portal-yr7e.vercel.app'}"
-           style="display:inline-block;background:#1a56db;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;margin-top:8px">
-          Upload Document →
+        <p style="font-size:15px">Dear <strong>${clientName}</strong>,</p>
+        <p style="color:#4b5563;margin-bottom:16px">
+          This is a gentle reminder that the following document is still pending from you:
+        </p>
+        <div style="background:#fef3c7;border-radius:8px;padding:14px 18px;margin:0 0 20px">
+          <div style="font-weight:600;font-size:15px">${documentName}</div>
+          ${serviceInfo ? `<div style="margin-top:4px;color:#78350f;font-size:13px">${serviceInfo}</div>` : ''}
+        </div>
+        <p style="color:#4b5563;margin-bottom:16px">
+          Please click the button below to upload this document directly — <strong>no login required</strong>.
+        </p>
+        <a href="${uploadUrl}"
+           style="display:inline-block;background:#1a56db;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600">
+          ⬆ Upload Document →
         </a>
-        <p style="margin-top:24px;color:#6b7280;font-size:13px">CA Client Portal · ${firmName}</p>
+        <p style="margin-top:24px;color:#9ca3af;font-size:12px">
+          🔒 Secure direct upload · CA Client Portal · ${firmName}
+        </p>
       </div>
     `
   })
