@@ -3,8 +3,20 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { daysRemaining, expiryStatus, formatExpiry } from '../planUtils'
 
-// Simple in-memory payment log stored in Supabase firms table notes
-// For a real app this would be a separate payments table
+const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/super-admin`
+
+async function callAdmin(action, payload = {}) {
+  const { data: { session } } = await supabase.auth.getSession()
+  const res = await fetch(FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ action, ...payload }),
+  })
+  return res.json()
+}
 
 export default function SuperAdminBilling() {
   const [firms, setFirms] = useState([])
@@ -12,11 +24,8 @@ export default function SuperAdminBilling() {
 
   async function load() {
     setLoading(true)
-    const { data } = await supabase
-      .from('firms')
-      .select('*')
-      .order('created_at', { ascending: false })
-    setFirms(data ?? [])
+    const res = await callAdmin('list_firms')
+    setFirms(res.firms ?? [])
     setLoading(false)
   }
 
