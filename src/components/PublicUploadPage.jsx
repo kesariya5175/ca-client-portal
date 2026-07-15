@@ -116,12 +116,11 @@ export default function PublicUploadPage({ requestId }) {
       })
       if (dbErr) { setError('Error saving record: ' + dbErr.message); setUploading(false); return }
 
-      const { error: statusErr } = await supabase
+      // Best-effort status update — don't block success screen if this fails
+      await supabase
         .from('doc_requests')
         .update({ status: 'uploaded' })
         .eq('id', request.id)
-
-      if (statusErr) { setError('Upload saved but status update failed: ' + statusErr.message); setUploading(false); return }
 
       setDone(true)
     } catch (err) {
