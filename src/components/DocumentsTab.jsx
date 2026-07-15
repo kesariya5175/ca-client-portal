@@ -433,8 +433,9 @@ function ReminderEditor({ request, onSaved }) {
         uploadUrl,
       }).catch(() => {})
       await supabase.from('doc_requests').update({ last_reminder_sent: new Date().toISOString() }).eq('id', request.id)
+      // Don't call onSaved() yet — it triggers re-render which destroys sentInfo state
+      // onSaved() is called when user dismisses with ✕
       setSentInfo({ uploadUrl, phone: client.phone, clientName: client.name, firmName })
-      onSaved()
     } else {
       // No email — just show WhatsApp option
       setSentInfo({ uploadUrl, phone: client?.phone, clientName: client?.name, firmName, noEmail: true })
@@ -465,7 +466,7 @@ function ReminderEditor({ request, onSaved }) {
             📱 WhatsApp
           </button>
         )}
-        <button className="btn btn-ghost btn-sm" onClick={() => setSentInfo(null)}>
+        <button className="btn btn-ghost btn-sm" onClick={() => { setSentInfo(null); onSaved() }}>
           ✕
         </button>
       </div>
