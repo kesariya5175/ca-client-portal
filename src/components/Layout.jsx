@@ -1,4 +1,5 @@
 // Shared shell: sidebar nav + top bar
+import { useState } from 'react'
 
 const CA_NAV = [
   { key: 'dashboard',  label: 'Dashboard',  icon: '📊' },
@@ -19,11 +20,26 @@ const CLIENT_NAV = [
 export default function Layout({ profile, activeTab, onTabChange, onSignOut, children }) {
   const isClient = profile?.role === 'client'
   const nav = isClient ? CLIENT_NAV : CA_NAV
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  function handleNav(key) {
+    onTabChange(key)
+    setSidebarOpen(false)
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
+      {/* Mobile toggle button */}
+      <button className="mobile-nav-toggle" onClick={() => setSidebarOpen(o => !o)}>☰</button>
+
+      {/* Mobile overlay */}
+      <div
+        className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+      />
+
       {/* Sidebar */}
-      <aside style={{
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`} style={{
         width: 220, background: 'var(--gray-900)', display: 'flex',
         flexDirection: 'column', flexShrink: 0, position: 'fixed',
         top: 0, left: 0, bottom: 0, zIndex: 10
@@ -52,7 +68,7 @@ export default function Layout({ profile, activeTab, onTabChange, onSignOut, chi
           {nav.map(item => (
             <button
               key={item.key}
-              onClick={() => onTabChange(item.key)}
+              onClick={() => handleNav(item.key)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 width: '100%', padding: '9px 12px', borderRadius: 7,
@@ -86,7 +102,7 @@ export default function Layout({ profile, activeTab, onTabChange, onSignOut, chi
       </aside>
 
       {/* Main content */}
-      <main style={{ marginLeft: 220, flex: 1, minWidth: 0 }}>
+      <main className="main-content" style={{ marginLeft: 220, flex: 1, minWidth: 0 }}>
         {children}
       </main>
     </div>

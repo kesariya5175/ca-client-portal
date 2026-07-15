@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import ExportButton from './ExportButton'
+import { emailTaskOverdue } from '../emailService'
 
 const TASK_EXPORT_COLS = [
   { key: 'title', label: 'Task' }, { key: 'client_name', label: 'Client' },
@@ -111,7 +112,7 @@ export default function TasksTab({ profile }) {
     const [tRes, cRes, sRes] = await Promise.all([
       supabase.from('tasks').select('*, clients(name), users(name)').eq('firm_id', profile.firm_id).order('due_date'),
       supabase.from('clients').select('id,name').eq('firm_id', profile.firm_id).eq('status', 'active').order('name'),
-      supabase.from('users').select('id,name').eq('firm_id', profile.firm_id).in('role', ['admin', 'staff']),
+      supabase.from('users').select('id,name,email').eq('firm_id', profile.firm_id).in('role', ['admin', 'staff']),
     ])
     setTasks(tRes.data ?? [])
     setClients(cRes.data ?? [])
@@ -136,6 +137,20 @@ export default function TasksTab({ profile }) {
     if (!confirm('Delete this task?')) return
     await supabase.from('tasks').delete().eq('id', id)
     load()
+  }
+
+  async function sendOverdueReminder(t) {
+    const assignedUser = staff.find(s => s.id === t.assigned_to)
+    if (!assignedUser?.email) { alert('No email found for assigned staff member.'); return }
+    const { data: firm } = await supabase.from('firms').select('name').eq('id', profile.firm_id).single()
+    await emailTaskOverdue({
+      staffEmail: assignedUser.email,
+      taskTitle: t.title,
+      clientName: t.clients?.name ?? '—',
+      dueDate: t.due_date ? new Date(t.due_date).toLocaleDateString('en-IN') : '—',
+      firmName: firm?.name ?? 'Your CA Firm',
+    })
+    alert(`Reminder sent to ${assignedUser.email}`)
   }
 
   const today = new Date()
@@ -211,12 +226,15 @@ export default function TasksTab({ profile }) {
                           <td>{fmtDate(t.due_date)}</td>
                           <td><span className={`badge ${b.cls}`}>{b.label}</span></td>
                           <td>
-                            <div style={{ display: 'flex', gap: 4 }}>
+                            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                               {t.status !== 'done' && (
                                 <button className="btn btn-ghost btn-sm" onClick={() => quickStatus(t, 'done')}>✓ Done</button>
                               )}
                               {t.status === 'done' && (
                                 <button className="btn btn-ghost btn-sm" onClick={() => quickStatus(t, 'pending')}>Reopen</button>
+                              )}
+                              {b.label === 'Overdue' && t.assigned_to && (
+                                <button className="btn btn-ghost btn-sm" style={{ color: '#c05621' }} onClick={() => sendOverdueReminder(t)}>⚠ Remind</button>
                               )}
                               <button className="btn btn-ghost btn-sm" onClick={() => setModal(t)}>Edit</button>
                               <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => deleteTask(t.id)}>Delete</button>

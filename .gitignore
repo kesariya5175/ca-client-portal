@@ -4,3 +4,9 @@ dist/
 .env.local
 .DS_Store
 *.log
+
+# Credentials and sensitive files — never commit these
+*credentials*
+*credntials*
+*Credentials*
+*.docx

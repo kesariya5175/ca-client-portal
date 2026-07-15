@@ -2,6 +2,7 @@
 // Opened from ClientsTab — CA can add/edit/update service statuses
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { emailServiceStatusUpdate } from '../emailService'
 
 const SERVICE_OPTIONS = [
   'ITR Filing',
@@ -89,6 +90,20 @@ function ServiceRow({ service, onUpdated, onDeleted }) {
   async function save() {
     setSaving(true)
     await supabase.from('client_services').update({ status, notes, updated_at: new Date().toISOString() }).eq('id', service.id)
+
+    // Email client if they have an email
+    if (service.client_email) {
+      const { data: firm } = await supabase.from('firms').select('name').eq('id', service.firm_id).single()
+      emailServiceStatusUpdate({
+        clientEmail: service.client_email,
+        clientName: service.client_name ?? '',
+        serviceName: service.service_name,
+        newStatus: status,
+        notes,
+        firmName: firm?.name ?? 'Your CA Firm',
+      }).catch(() => {})
+    }
+
     setSaving(false); setEditing(false); onUpdated()
   }
 
@@ -175,7 +190,7 @@ export default function ClientServicesModal({ client, firmId, onClose }) {
             : services.length === 0
               ? <div className="empty-state" style={{ padding: '20px 0' }}><p>No services added yet</p></div>
               : services.map(s => (
-                  <ServiceRow key={s.id} service={s} onUpdated={load} onDeleted={load} />
+                  <ServiceRow key={s.id} service={{ ...s, client_email: client.email, client_name: client.name }} onUpdated={load} onDeleted={load} />
                 ))
           }
         </div>
