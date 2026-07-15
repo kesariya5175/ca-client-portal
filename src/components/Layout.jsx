@@ -49,11 +49,7 @@ export default function Layout({ profile, activeTab, onTabChange, onSignOut, chi
         {/* Brand */}
         <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 34, height: 34, borderRadius: 8, background: 'var(--brand)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 13, fontWeight: 700, color: '#fff', flexShrink: 0
-            }}>CA</div>
+            <img src="/logo.png" alt="CA" style={{ width: 34, height: 34, objectFit: 'contain', flexShrink: 0 }} />
             <div>
               <div style={{ color: '#fff', fontWeight: 600, fontSize: 13, lineHeight: 1.2 }}>
                 {profile?.firms?.name || 'CA Portal'}

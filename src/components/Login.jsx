@@ -64,7 +64,7 @@ function LoginModal({ onLogin, onClose }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <CaLogo size={36} dark />
+            <img src="/logo.png" alt="CA Client Portal" style={{ width: 36, height: 36, objectFit: 'contain' }} />
             <div>
               <div style={{ fontWeight: 700, fontSize: 15, color: '#1e3a8a' }}>CA Client Portal</div>
               <div style={{ fontSize: 11, color: '#94a3b8' }}>Sign in to your account</div>
@@ -204,7 +204,7 @@ export default function Login({ onLogin }) {
         height: 68,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <CaLogo size={40} dark />
+          <img src="/logo.png" alt="CA Client Portal" style={{ width: 40, height: 40, objectFit: 'contain' }} />
           <div>
             <div style={{ fontWeight: 800, fontSize: 16, color: NAVY, lineHeight: 1.1 }}>CA Client Portal</div>
             <div style={{ fontSize: 10, color: '#64748b' }}>Trusted · Professional · Reliable</div>
@@ -538,7 +538,7 @@ export default function Login({ onLogin }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 32, marginBottom: 40 }}>
           <div style={{ flex: '1 1 220px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <CaLogo size={36} />
+              <img src="/logo.png" alt="CA Client Portal" style={{ width: 36, height: 36, objectFit: 'contain' }} />
               <span style={{ color: 'white', fontWeight: 700, fontSize: 15 }}>CA Client Portal</span>
             </div>
             <p style={{ fontSize: 13, lineHeight: 1.7, maxWidth: 240 }}>
@@ -557,7 +557,7 @@ export default function Login({ onLogin }) {
           <div style={{ flex: '1 1 160px' }}>
             <div style={{ color: 'white', fontWeight: 700, marginBottom: 14, fontSize: 14 }}>Contact</div>
             <div style={{ fontSize: 13, marginBottom: 8 }}>📧 support@caclientportal.in</div>
-            <div style={{ fontSize: 13, marginBottom: 8 }}>📱 +91 98765 43210</div>
+            <div style={{ fontSize: 13, marginBottom: 8 }}>📱 +91 81300 97489</div>
             <div style={{ fontSize: 13 }}>🇮🇳 Made in India</div>
           </div>
         </div>
