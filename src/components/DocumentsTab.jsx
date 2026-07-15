@@ -70,6 +70,8 @@ function DocRequestModal({ firmId, client, service, onClose, onSaved }) {
   const [newDoc, setNewDoc]             = useState('')
   const [saving, setSaving]             = useState(false)
   const [error, setError]               = useState('')
+  const [createdLinks, setCreatedLinks] = useState(null)  // null = not sent yet
+  const [firmNameSent, setFirmNameSent] = useState('')
 
   useEffect(() => {
     const std = getServiceDocuments(service.service_name)
@@ -130,24 +132,118 @@ function DocRequestModal({ firmId, client, service, onClose, onSaved }) {
       reminder_days: autoReminder ? reminderDays : 0,
     }))
 
-    const { error: err } = await supabase.from('doc_requests').insert(rows)
+    const { data: inserted, error: err } = await supabase
+      .from('doc_requests').insert(rows).select('id,title')
     if (err) { setError(err.message); setSaving(false); return }
 
-    // Send email notification to client
+    // Build per-document upload links using the request ID
+    const APP_URL = import.meta.env.VITE_APP_URL ?? 'https://ca-client-portal-yr7e.vercel.app'
+    const docLinks = (inserted ?? []).map(r => ({
+      title: r.title,
+      uploadUrl: `${APP_URL}/?upload=${r.id}`,
+    }))
+
+    // Send email with individual links
     if (client.email) {
-      const docList = [...selected].join(', ')
       emailDocumentRequest({
         clientEmail: client.email,
         clientName: client.name,
-        requestTitle: `${service.service_name} (${service.financial_year}) — ${[...selected].length} document(s): ${docList}`,
         firmName,
+        serviceName: service.service_name,
+        financialYear: service.financial_year,
+        documents: docLinks,
       }).catch(() => {})
     }
 
-    onSaved()
+    setCreatedLinks(docLinks)
+    setFirmNameSent(firmName)
+    setSaving(false)
   }
 
   const allDocs = [...standardDocs, ...customDocs]
+
+  // ── WhatsApp helper ─────────────────────────────────────────
+  function openWhatsApp(links) {
+    if (!client.phone) return
+    const APP_URL = import.meta.env.VITE_APP_URL ?? 'https://ca-client-portal-yr7e.vercel.app'
+    const phone = client.phone.replace(/\D/g, '')
+    const waPhone = phone.startsWith('91') ? phone : `91${phone}`
+    const docLines = links.map((d, i) =>
+      `${i + 1}. ${d.title}\n   📎 ${d.uploadUrl}`
+    ).join('\n\n')
+    const msg = `Hello ${client.name},\n\n${firmNameSent} has requested the following document(s)${service.service_name ? ` for *${service.service_name}*${service.financial_year ? ` (${service.financial_year})` : ''}` : ''}:\n\n${docLines}\n\n👆 Click each link to upload the document directly — *no login required*.\n\nThank you,\n${firmNameSent}`
+    window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`, '_blank')
+  }
+
+  // ── Success state after sending ─────────────────────────────
+  if (createdLinks) {
+    return (
+      <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+        <div className="modal" style={{ maxWidth: 560 }}>
+          <div className="modal-header">
+            <h3>✅ Requests Sent!</h3>
+            <button className="btn btn-ghost btn-sm" onClick={() => { onSaved() }}>✕</button>
+          </div>
+          <div className="modal-body">
+            <p style={{ marginBottom: 16, color: 'var(--gray-600)', fontSize: 13 }}>
+              {createdLinks.length} document request{createdLinks.length > 1 ? 's' : ''} created for <strong>{client.name}</strong>.
+              {client.email ? ' Email has been sent.' : ' No email on file — share the links below manually.'}
+            </p>
+
+            {/* Notify via WhatsApp */}
+            {client.phone && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>Notify via WhatsApp</div>
+                <button
+                  className="btn btn-whatsapp"
+                  onClick={() => openWhatsApp(createdLinks)}
+                  style={{ width: '100%', justifyContent: 'center', padding: '11px' }}
+                >
+                  📱 Send on WhatsApp ({client.phone})
+                </button>
+                <div style={{ fontSize: 11, color: 'var(--gray-400)', marginTop: 4 }}>
+                  Opens WhatsApp with a pre-filled message containing all upload links.
+                </div>
+              </div>
+            )}
+            {!client.phone && (
+              <div className="alert" style={{ background: '#fef3c7', color: '#92400e', marginBottom: 16 }}>
+                No phone number on file for this client — add it in the client profile to enable WhatsApp.
+              </div>
+            )}
+
+            {/* Document links */}
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>Upload Links (share manually if needed)</div>
+            <div style={{ border: '1px solid var(--gray-200)', borderRadius: 8, overflow: 'hidden' }}>
+              {createdLinks.map((d, i) => (
+                <div key={i} style={{
+                  padding: '10px 14px',
+                  borderBottom: i < createdLinks.length - 1 ? '1px solid var(--gray-100)' : 'none',
+                }}>
+                  <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 4 }}>{d.title}</div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 11, color: 'var(--gray-400)', fontFamily: 'monospace', wordBreak: 'break-all', flex: 1 }}>
+                      {d.uploadUrl}
+                    </span>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => navigator.clipboard?.writeText(d.uploadUrl)}
+                      style={{ flexShrink: 0 }}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button className="btn btn-primary" onClick={() => { onSaved() }}>Done</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>

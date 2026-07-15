@@ -22,24 +22,58 @@ async function sendEmail({ to, subject, html }) {
 
 // ── Email templates ──────────────────────────────────────────
 
-export async function emailDocumentRequest({ clientEmail, clientName, requestTitle, firmName }) {
+// documents = [{ title, uploadUrl }]
+export async function emailDocumentRequest({ clientEmail, clientName, firmName, serviceName, financialYear, documents }) {
+  const APP_URL = import.meta.env.VITE_APP_URL ?? 'https://ca-client-portal-yr7e.vercel.app'
+  const docListHtml = documents.map((d, i) => `
+    <tr>
+      <td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;font-size:14px">
+        <strong>${i + 1}. ${d.title}</strong>
+      </td>
+      <td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;text-align:right">
+        <a href="${d.uploadUrl}"
+           style="display:inline-block;background:#1a56db;color:#fff;padding:6px 14px;border-radius:6px;text-decoration:none;font-size:13px;white-space:nowrap">
+          Upload →
+        </a>
+      </td>
+    </tr>
+  `).join('')
+
   return sendEmail({
     to: clientEmail,
-    subject: `[Action Required] Document Request from ${firmName}`,
+    subject: `[Action Required] Documents Requested by ${firmName}${serviceName ? ` — ${serviceName}` : ''}`,
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
-        <h2 style="color:#1a56db">Document Request</h2>
-        <p>Dear ${clientName},</p>
-        <p>Your CA firm <strong>${firmName}</strong> has requested the following document:</p>
-        <div style="background:#f3f4f6;border-radius:8px;padding:14px 18px;margin:16px 0;font-weight:600">
-          ${requestTitle}
+      <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px">
+        <div style="background:#1a56db;border-radius:10px;padding:20px 24px;margin-bottom:24px">
+          <div style="color:#fff;font-weight:700;font-size:18px">CA Client Portal</div>
+          <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-top:2px">${firmName}</div>
         </div>
-        <p>Please log in to the CA Client Portal to upload the document.</p>
-        <a href="${import.meta.env.VITE_APP_URL ?? 'https://ca-client-portal-yr7e.vercel.app'}"
-           style="display:inline-block;background:#1a56db;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;margin-top:8px">
-          Upload Document →
-        </a>
-        <p style="margin-top:24px;color:#6b7280;font-size:13px">CA Client Portal · ${firmName}</p>
+
+        <p style="font-size:15px;margin-bottom:6px">Dear <strong>${clientName}</strong>,</p>
+        <p style="color:#4b5563;margin-bottom:16px">
+          <strong>${firmName}</strong> has requested the following document(s)${serviceName ? ` for <strong>${serviceName}</strong>${financialYear ? ` (${financialYear})` : ''}` : ''}:
+        </p>
+
+        <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:20px">
+          <thead>
+            <tr style="background:#f9fafb">
+              <th style="padding:10px 14px;text-align:left;font-size:12px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">DOCUMENT</th>
+              <th style="padding:10px 14px;text-align:right;font-size:12px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">ACTION</th>
+            </tr>
+          </thead>
+          <tbody>${docListHtml}</tbody>
+        </table>
+
+        <div style="background:#eff6ff;border-radius:8px;padding:14px 16px;margin-bottom:20px;border:1px solid #bfdbfe">
+          <p style="color:#1e40af;font-size:13px;margin:0">
+            💡 <strong>No login required</strong> — click each "Upload →" button to upload that specific document directly.
+          </p>
+        </div>
+
+        <p style="color:#6b7280;font-size:12px;margin-top:24px">
+          CA Client Portal · ${firmName} ·
+          <a href="${APP_URL}" style="color:#1a56db">Open Portal</a>
+        </p>
       </div>
     `
   })

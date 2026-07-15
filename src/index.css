@@ -162,6 +162,10 @@ tr:hover td { background: var(--gray-50); }
   position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9;
 }
 
+/* ── WhatsApp button ── */
+.btn-whatsapp { background: #25D366; color: #fff; }
+.btn-whatsapp:hover:not(:disabled) { background: #1da851; }
+
 /* ── Mobile responsive ── */
 @media (max-width: 768px) {
   .mobile-nav-toggle { display: block; }
@@ -172,28 +176,78 @@ tr:hover td { background: var(--gray-50); }
     transform: translateX(-100%);
     transition: transform 0.25s ease;
   }
-  aside.sidebar.open {
-    transform: translateX(0);
-  }
+  aside.sidebar.open { transform: translateX(0); }
 
   main.main-content {
     margin-left: 0 !important;
     padding-top: 52px;
   }
 
-  .page { padding: 16px; }
-  .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .page-header > div { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+  /* Page layout */
+  .page { padding: 12px; }
+  .page-header {
+    flex-direction: column; align-items: flex-start;
+    gap: 10px; margin-bottom: 14px;
+  }
+  .page-header h2 { font-size: 16px; }
+  .page-header > div,
+  .page-header > div:last-child {
+    width: 100%; display: flex; flex-wrap: wrap; gap: 8px;
+  }
 
-  .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  /* Stats */
+  .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+  .stat-card { padding: 12px 14px; }
+  .stat-card .stat-value { font-size: 20px; }
 
-  .table-wrap { font-size: 12px; }
-  th, td { padding: 8px 10px; }
+  /* Tabs — horizontal scroll, no wrap */
+  .tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 1px;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { white-space: nowrap; flex-shrink: 0; padding: 8px 12px; font-size: 12px; }
 
-  .modal { max-width: 100% !important; margin: 0; border-radius: 12px 12px 0 0; }
+  /* Tables */
+  .table-wrap { font-size: 12px; -webkit-overflow-scrolling: touch; }
+  th { padding: 7px 10px; font-size: 11px; }
+  td { padding: 8px 10px; }
+  .hide-mobile { display: none !important; }
+
+  /* Cards */
+  .card { padding: 14px; }
+
+  /* Modal — slides up from bottom */
+  .modal { max-width: 100% !important; margin: 0; border-radius: 16px 16px 0 0; }
   .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal-body { padding: 16px; }
+  .modal-footer { padding: 12px 16px; flex-wrap: wrap; }
+  .modal-header { padding: 14px 16px 12px; }
 
-  .grid-2 { grid-template-columns: 1fr; }
+  /* Forms */
+  .grid-2 { grid-template-columns: 1fr; gap: 0; }
+  .form-group { margin-bottom: 12px; }
 
+  /* Buttons */
+  .btn { padding: 8px 14px; }
   .btn-sm { padding: 6px 10px; font-size: 12px; }
+
+  /* Empty states */
+  .empty-state { padding: 32px 16px; }
+
+  /* Alert */
+  .alert { font-size: 12px; padding: 8px 12px; }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .page { padding: 10px; }
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .stat-card .stat-value { font-size: 18px; }
+  .stat-card { padding: 10px 12px; }
+  .card { padding: 12px; }
+  .page-header h2 { font-size: 15px; }
 }

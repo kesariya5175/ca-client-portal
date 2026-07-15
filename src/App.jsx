@@ -15,7 +15,11 @@ import SuperAdminLayout from './components/SuperAdminLayout'
 import SuperAdminBilling from './components/SuperAdminBilling'
 import ClientBillingTab from './components/ClientBillingTab'
 import ClientDetailPage from './components/ClientDetailPage'
+import PublicUploadPage from './components/PublicUploadPage'
 import { expiryStatus, daysRemaining, formatExpiry } from './planUtils'
+
+// Check if this is a public document upload link
+const uploadRequestId = new URLSearchParams(window.location.search).get('upload')
 
 function SuperAdminShell({ profile, onSignOut }) {
   const [tab, setTab] = useState('firms')
@@ -28,6 +32,9 @@ function SuperAdminShell({ profile, onSignOut }) {
 }
 
 export default function App() {
+  // Public upload page — show without auth if ?upload=<id> is in URL
+  if (uploadRequestId) return <PublicUploadPage requestId={uploadRequestId} />
+
   const { user, profile, loading, signIn, signOut, isClient, isSuperAdmin } = useAuth()
   const [tab, setTab] = useState(isClient ? 'my-documents' : 'dashboard')
   const [viewClientId, setViewClientId] = useState(null)
