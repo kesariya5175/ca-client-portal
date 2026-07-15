@@ -14,6 +14,7 @@ const CA_NAV = [
 const CLIENT_NAV = [
   { key: 'my-documents', label: 'My Documents', icon: '📁' },
   { key: 'my-status',    label: 'My Status',    icon: '📋' },
+  { key: 'my-bills',     label: 'My Bills',     icon: '💳' },
   { key: 'notices',      label: 'Notices',      icon: '📢' },
 ]
 

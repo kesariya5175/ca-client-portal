@@ -11,6 +11,7 @@ import NoticesTab     from './components/NoticesTab'
 import SettingsTab    from './components/SettingsTab'
 import ClientStatusTab from './components/ClientStatusTab'
 import SuperAdminPanel from './components/SuperAdminPanel'
+import ClientBillingTab from './components/ClientBillingTab'
 
 export default function App() {
   const { user, profile, loading, signIn, signOut, isClient, isSuperAdmin } = useAuth()
@@ -46,6 +47,7 @@ export default function App() {
       if (tab === 'my-documents') return <DocumentsTab profile={profile} />
       if (tab === 'my-status')    return <ClientStatusTab profile={profile} />
       if (tab === 'notices')      return <NoticesTab profile={profile} />
+      if (tab === 'my-bills')     return <ClientBillingTab profile={profile} />
       return <DocumentsTab profile={profile} />
     }
 
