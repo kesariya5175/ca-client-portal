@@ -10,9 +10,10 @@ import BillingTab     from './components/BillingTab'
 import NoticesTab     from './components/NoticesTab'
 import SettingsTab    from './components/SettingsTab'
 import ClientStatusTab from './components/ClientStatusTab'
+import SuperAdminPanel from './components/SuperAdminPanel'
 
 export default function App() {
-  const { user, profile, loading, signIn, signOut, isClient } = useAuth()
+  const { user, profile, loading, signIn, signOut, isClient, isSuperAdmin } = useAuth()
   const [tab, setTab] = useState(isClient ? 'my-documents' : 'dashboard')
 
   if (loading) {
@@ -28,6 +29,15 @@ export default function App() {
 
   if (!user || !profile) {
     return <Login onLogin={signIn} />
+  }
+
+  // Super admin gets their own dedicated panel
+  if (isSuperAdmin) {
+    return (
+      <Layout profile={profile} activeTab="super-admin" onTabChange={() => {}} onSignOut={signOut}>
+        <SuperAdminPanel />
+      </Layout>
+    )
   }
 
   function renderTab() {

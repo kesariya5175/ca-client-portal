@@ -58,8 +58,9 @@ export function useAuth() {
     firmId,
     signIn,
     signOut,
-    isAdmin:  role === 'admin',
-    isStaff:  role === 'staff' || role === 'admin',
-    isClient: role === 'client',
+    isAdmin:      role === 'admin',
+    isStaff:      role === 'staff' || role === 'admin',
+    isClient:     role === 'client',
+    isSuperAdmin: profile?.is_super_admin === true,
   }
 }
