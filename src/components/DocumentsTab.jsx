@@ -538,7 +538,7 @@ export default function DocumentsTab({ profile, onViewClient }) {
   // ── Load clients on mount (CA only)
   useEffect(() => {
     if (!isClient) {
-      supabase.from('clients').select('id,name,email,pan')
+      supabase.from('clients').select('id,name,email,phone,pan')
         .eq('firm_id', profile.firm_id).eq('status', 'active').order('name')
         .then(({ data }) => setClients(data ?? []))
     }
