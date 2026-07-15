@@ -104,7 +104,7 @@ function ClientModal({ firmId, client, onClose, onSaved }) {
   )
 }
 
-export default function ClientsTab({ profile, isAdmin }) {
+export default function ClientsTab({ profile, isAdmin, onViewClient }) {
   const [clients, setClients]   = useState([])
   const [loading, setLoading]   = useState(true)
   const [search, setSearch]     = useState('')
@@ -220,7 +220,12 @@ export default function ClientsTab({ profile, isAdmin }) {
                     {filtered.map(c => (
                       <tr key={c.id}>
                         <td>
-                          <div style={{ fontWeight: 500 }}>{c.name}</div>
+                          <button
+                            onClick={() => onViewClient?.(c.id)}
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+                          >
+                            <div style={{ fontWeight: 500, color: 'var(--brand)', textDecoration: 'underline', textUnderlineOffset: 3 }}>{c.name}</div>
+                          </button>
                           {c.email && <div className="text-muted text-sm">{c.email}</div>}
                         </td>
                         <td><span className="badge badge-blue">{c.type}</span></td>

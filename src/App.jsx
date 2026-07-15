@@ -14,6 +14,7 @@ import SuperAdminPanel from './components/SuperAdminPanel'
 import SuperAdminLayout from './components/SuperAdminLayout'
 import SuperAdminBilling from './components/SuperAdminBilling'
 import ClientBillingTab from './components/ClientBillingTab'
+import ClientDetailPage from './components/ClientDetailPage'
 import { expiryStatus, daysRemaining, formatExpiry } from './planUtils'
 
 function SuperAdminShell({ profile, onSignOut }) {
@@ -29,6 +30,7 @@ function SuperAdminShell({ profile, onSignOut }) {
 export default function App() {
   const { user, profile, loading, signIn, signOut, isClient, isSuperAdmin } = useAuth()
   const [tab, setTab] = useState(isClient ? 'my-documents' : 'dashboard')
+  const [viewClientId, setViewClientId] = useState(null)
 
   if (loading) {
     return (
@@ -82,11 +84,23 @@ export default function App() {
       return <DocumentsTab profile={profile} />
     }
 
+    // Client detail page (overrides current tab)
+    if (viewClientId) {
+      return (
+        <ClientDetailPage
+          clientId={viewClientId}
+          firmId={profile.firm_id}
+          profile={profile}
+          onBack={() => setViewClientId(null)}
+        />
+      )
+    }
+
     // CA / Staff tabs
     switch (tab) {
       case 'dashboard':  return <Dashboard  profile={profile} onTabChange={setTab} />
-      case 'clients':    return <ClientsTab profile={profile} isAdmin={profile.role === 'admin'} />
-      case 'documents':  return <DocumentsTab profile={profile} />
+      case 'clients':    return <ClientsTab profile={profile} isAdmin={profile.role === 'admin'} onViewClient={setViewClientId} />
+      case 'documents':  return <DocumentsTab profile={profile} onViewClient={setViewClientId} />
       case 'tasks':      return <TasksTab   profile={profile} />
       case 'billing':    return <BillingTab  profile={profile} />
       case 'notices':    return <NoticesTab  profile={profile} />
@@ -99,8 +113,13 @@ export default function App() {
   const defaultTab = profile.role === 'client' ? 'my-documents' : 'dashboard'
   const activeTab = tab || defaultTab
 
+  function handleTabChange(newTab) {
+    setViewClientId(null)
+    setTab(newTab)
+  }
+
   return (
-    <Layout profile={profile} activeTab={activeTab} onTabChange={setTab} onSignOut={signOut}>
+    <Layout profile={profile} activeTab={activeTab} onTabChange={handleTabChange} onSignOut={signOut}>
       {subStatus === 'expiring-soon' && profile.role !== 'client' && !isSuperAdmin && (
         <div style={{ background: '#fef3c7', color: '#92400e', padding: '10px 24px', fontSize: 13, borderBottom: '1px solid #fcd34d' }}>
           ⚡ Your subscription expires in <strong>{subDays} days</strong> ({subExpiry}). Contact your CA portal admin to renew.

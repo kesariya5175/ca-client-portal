@@ -387,7 +387,7 @@ function ReminderEditor({ request, onSaved }) {
 }
 
 // ── Main DocumentsTab ──────────────────────────────────────────
-export default function DocumentsTab({ profile }) {
+export default function DocumentsTab({ profile, onViewClient }) {
   const isClient = profile.role === 'client'
   const [clients, setClients]           = useState([])
   const [selectedClient, setSelectedClient] = useState(null)
@@ -672,7 +672,13 @@ export default function DocumentsTab({ profile }) {
                   <tbody>
                     {reqs.map(r => (
                       <tr key={r.id}>
-                        {!selectedClient && <td style={{ fontWeight: 500 }}>{r.clients?.name}</td>}
+                        {!selectedClient && (
+                        <td>
+                          <button onClick={() => onViewClient?.(r.client_id)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontWeight: 500, color: 'var(--brand)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                            {r.clients?.name}
+                          </button>
+                        </td>
+                      )}
                         <td style={{ fontWeight: 500 }}>{r.title}</td>
                         <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(r.due_date)}</td>
                         <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
