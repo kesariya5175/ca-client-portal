@@ -557,6 +557,12 @@ export default function DocumentsTab({ profile, onViewClient }) {
     loadRequests()
   }
 
+  async function deleteRequest(req) {
+    if (!confirm(`Delete request for "${req.title}"? This cannot be undone.`)) return
+    await supabase.from('doc_requests').delete().eq('id', req.id)
+    loadRequests()
+  }
+
   const filtered = requests.filter(r => filter === 'all' || r.status === filter)
 
   // Group filtered requests by service+FY for display
@@ -795,9 +801,15 @@ export default function DocumentsTab({ profile, onViewClient }) {
                             )}
                             {r.last_reminder_sent && r.status === 'pending' && (
                               <span style={{ fontSize: 10, color: 'var(--gray-400)', whiteSpace: 'nowrap' }}>
-                                Last reminded: {fmtDate(r.last_reminder_sent)}
+                                Reminded: {fmtDate(r.last_reminder_sent)}
                               </span>
                             )}
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              style={{ color: 'var(--danger)' }}
+                              onClick={() => deleteRequest(r)}
+                              title="Delete request"
+                            >✕</button>
                           </div>
                         </td>
                       </tr>
