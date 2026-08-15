@@ -1,0 +1,15 @@
+{
+  "name": "cacp-r2-backup",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nightly R2 bucket-to-bucket backup for CA Client Portal documents",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "test-run": "wrangler dev --test-scheduled"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}

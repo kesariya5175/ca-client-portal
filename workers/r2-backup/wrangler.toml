@@ -1,0 +1,24 @@
+name = "cacp-r2-backup"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+# 20:00 UTC = 01:30 IST — half an hour after the database dump, so a
+# database backup and its matching files land close together in time.
+[triggers]
+crons = ["0 20 * * *"]
+
+# The live documents bucket. Read-only in practice: this worker only
+# calls list() and get() on it.
+[[r2_buckets]]
+binding    = "LIVE_BUCKET"
+bucket_name = "cacp-documents"
+
+# The backup copy. Keep this in a DIFFERENT bucket, and ideally scope
+# your application's API token so it has no access here at all. That is
+# the whole point — if the app's credentials leak, this survives.
+[[r2_buckets]]
+binding     = "BACKUP_BUCKET"
+bucket_name = "cacp-documents-backup"
+
+# Secret, set via: wrangler secret put BACKUP_TRIGGER_SECRET
+# Only needed for the manual /run endpoint; the cron path ignores it.

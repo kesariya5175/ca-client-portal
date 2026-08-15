@@ -28,7 +28,10 @@ function SuperAdminShell({ profile, onSignOut }) {
 }
 
 export default function App() {
-  const { user, profile, loading, signIn, signOut, isClient, isSuperAdmin } = useAuth()
+  const {
+    user, profile, loading, signIn, signInWithGoogle, signOut,
+    authError, clearAuthError, isClient, isSuperAdmin,
+  } = useAuth()
   const [tab, setTab] = useState(isClient ? 'my-documents' : 'dashboard')
   const [viewClientId, setViewClientId] = useState(null)
 
@@ -44,7 +47,14 @@ export default function App() {
   }
 
   if (!user || !profile) {
-    return <Login onLogin={signIn} />
+    return (
+      <Login
+        onLogin={signIn}
+        onGoogleLogin={signInWithGoogle}
+        authError={authError}
+        onClearAuthError={clearAuthError}
+      />
+    )
   }
 
   // Subscription expiry check (non-super-admin, non-client only)

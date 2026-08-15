@@ -1,0 +1,81 @@
+# Nightly Postgres backup → Cloudflare R2
+#
+# The Supabase free plan has no automated backups, so this is the only
+# thing standing between you and a bad afternoon. It costs nothing:
+# GitHub Actions is free for public repos and generous for private ones,
+# and a compressed dump of this database is a few MB.
+#
+# Retention is handled by an R2 lifecycle rule, not here — see
+# BACKUP_SETUP.md.
+
+name: Backup database
+
+on:
+  schedule:
+    # 19:30 UTC = 01:00 IST. Deliberately after the working day so the
+    # dump captures a full day of filings. GitHub cron is UTC only.
+    - cron: '30 19 * * *'
+  workflow_dispatch:        # lets you trigger a manual backup before risky migrations
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Dump database
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          STAMP=$(date -u +%Y-%m-%d)
+
+          # Roles and schema are dumped separately from data so a partial
+          # restore is possible — you usually want data only.
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f schema.sql
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f data.sql --data-only
+
+          # Storage objects are NOT in here. Files live in R2 and are
+          # covered by the sync worker.
+          tar -czf "cacp-${STAMP}.sql.gz" schema.sql data.sql
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+
+      - name: Sanity-check the dump
+        run: |
+          set -euo pipefail
+          # A dump that succeeded but produced nothing is the classic
+          # silent failure. Fail loudly instead of uploading an empty file.
+          SIZE=$(stat -c%s "cacp-${STAMP}.sql.gz")
+          echo "Dump size: ${SIZE} bytes"
+          if [ "$SIZE" -lt 2000 ]; then
+            echo "::error::Dump is suspiciously small — treating as failed."
+            exit 1
+          fi
+          grep -q "CREATE TABLE" schema.sql || {
+            echo "::error::Schema dump contains no CREATE TABLE statements."
+            exit 1
+          }
+
+      - name: Upload to R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BACKUP_BUCKET: ${{ secrets.R2_BACKUP_BUCKET }}
+        run: |
+          set -euo pipefail
+          aws s3 cp "cacp-${STAMP}.sql.gz" \
+            "s3://${R2_BACKUP_BUCKET}/database/cacp-${STAMP}.sql.gz" \
+            --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "::error::Nightly database backup FAILED. \
+          A silent backup failure is worse than no backup — investigate today."

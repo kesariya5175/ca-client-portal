@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../supabaseClient'
 import { emailDocumentRequest, emailDocumentReminder } from '../emailService'
 import { getServiceDocuments, getFinancialYears } from '../caServices'
+import DocLink from './DocLink'
 
 const FY_OPTIONS = getFinancialYears()
 
@@ -21,10 +22,11 @@ function UploadModal({ request, onClose, onSaved }) {
     const path = `${request.firm_id}/${request.client_id}/${request.id}/${Date.now()}.${ext}`
     const { error: uploadErr } = await supabase.storage.from('documents').upload(path, file)
     if (uploadErr) { setError(uploadErr.message); setSaving(false); return }
-    const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path)
+    // Store the storage path, not a URL. The bucket is private, so links
+    // are signed on demand at download time.
     const { error: dbErr } = await supabase.from('documents').insert({
       firm_id: request.firm_id, client_id: request.client_id,
-      request_id: request.id, file_name: file.name, file_url: publicUrl, status: 'uploaded',
+      request_id: request.id, file_name: file.name, file_url: path, status: 'uploaded',
     })
     if (dbErr) { setError(dbErr.message); setSaving(false); return }
     await supabase.from('doc_requests').update({ status: 'uploaded' }).eq('id', request.id)
@@ -666,8 +668,7 @@ export default function DocumentsTab({ profile, onViewClient }) {
                           <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
                           <td>
                             {(r.documents ?? []).map(d => (
-                              <a key={d.id} href={d.file_url} target="_blank" rel="noopener noreferrer"
-                                style={{ display: 'block', color: 'var(--brand)', fontSize: 12 }}>📎 {d.file_name}</a>
+                              <DocLink key={d.id} doc={d} />
                             ))}
                             {(r.documents ?? []).length === 0 && <span className="text-muted text-sm">No files</span>}
                           </td>
@@ -830,8 +831,7 @@ export default function DocumentsTab({ profile, onViewClient }) {
                         <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
                         <td>
                           {(r.documents ?? []).map(d => (
-                            <a key={d.id} href={d.file_url} target="_blank" rel="noopener noreferrer"
-                              style={{ display: 'block', color: 'var(--brand)', fontSize: 12 }}>📎 {d.file_name}</a>
+                            <DocLink key={d.id} doc={d} />
                           ))}
                           {(r.documents ?? []).length === 0 && <span className="text-muted text-sm">No files</span>}
                         </td>

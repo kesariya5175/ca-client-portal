@@ -104,14 +104,16 @@ export default function PublicUploadPage({ requestId }) {
         return
       }
 
-      const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path)
-
+      // The bucket is private — store the storage path and sign a URL
+      // on demand at download time. An anonymous uploader has no read
+      // access to what they just uploaded, which is intended: the file
+      // is for the CA firm, not for whoever has the upload link.
       const { error: dbErr } = await supabase.from('documents').insert({
         firm_id:    request.firm_id,
         client_id:  request.client_id,
         request_id: request.id,
         file_name:  fileName,
-        file_url:   publicUrl,
+        file_url:   path,
         status:     'uploaded',
       })
       if (dbErr) { setError('Error saving record: ' + dbErr.message); setUploading(false); return }

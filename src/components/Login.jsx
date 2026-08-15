@@ -21,8 +21,20 @@ function CaLogo({ size = 48, dark = false }) {
   )
 }
 
+// ── Google "G" mark ────────────────────────────────────────────
+function GoogleIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
+      <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11.8c-.5 2.7-2 5-4.4 6.6v5.5h7.1c4.1-3.8 6.6-9.4 6.6-16.1z"/>
+      <path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.4l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.5-3.8-12.2-9H4.5v5.7C8.1 41.1 15.5 46 24 46z"/>
+      <path fill="#FBBC05" d="M11.8 28.2c-.4-1.3-.7-2.7-.7-4.2s.3-2.9.7-4.2v-5.7H4.5C3 17.1 2.1 20.4 2.1 24s.9 6.9 2.4 9.9l7.3-5.7z"/>
+      <path fill="#EA4335" d="M24 10.8c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.2 29.9 2 24 2 15.5 2 8.1 6.9 4.5 14.1l7.3 5.7c1.7-5.2 6.5-9 12.2-9z"/>
+    </svg>
+  )
+}
+
 // ── Login Modal ────────────────────────────────────────────────
-function LoginModal({ onLogin, onClose }) {
+function LoginModal({ onLogin, onGoogleLogin, onClose, authError, onClearAuthError }) {
   const [email, setEmail]               = useState('')
   const [password, setPassword]         = useState('')
   const [showPass, setShowPass]         = useState(false)
@@ -33,6 +45,18 @@ function LoginModal({ onLogin, onClose }) {
   const [forgotEmail, setForgotEmail]   = useState('')
   const [forgotSent, setForgotSent]     = useState(false)
   const [forgotLoading, setForgotLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+
+  async function handleGoogle() {
+    setError(''); onClearAuthError?.(); setGoogleLoading(true)
+    try { await onGoogleLogin() }
+    catch (err) {
+      setError(err.message || 'Google sign-in failed. Please try again.')
+      setGoogleLoading(false)
+    }
+    // On success the browser navigates away to Google, so the button
+    // is deliberately left in its loading state.
+  }
 
   async function handleSubmit(e) {
     e.preventDefault(); setError(''); setLoading(true)
@@ -90,6 +114,9 @@ function LoginModal({ onLogin, onClose }) {
             <>
               <h3 style={{ fontWeight: 700, fontSize: 17, marginBottom: 4, color: '#1e3a8a' }}>Reset Password</h3>
               <p style={{ color: '#64748b', fontSize: 13, marginBottom: 20 }}>We'll email you a reset link.</p>
+              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1e40af', fontSize: 12, borderRadius: 6, padding: '10px 12px', marginBottom: 14, lineHeight: 1.5 }}>
+                Signing in with a <strong>username</strong>? There's no email on your account — ask your firm admin to request a new password from the portal admin.
+              </div>
               {error && <div className="alert alert-error" style={{ marginBottom: 14 }}>{error}</div>}
               <form onSubmit={handleForgot}>
                 <div className="form-group">
@@ -108,11 +135,46 @@ function LoginModal({ onLogin, onClose }) {
           )
         ) : (
           <>
-            {error && <div className="alert alert-error" style={{ marginBottom: 14 }}>{error}</div>}
+            {(error || authError) && (
+              <div className="alert alert-error" style={{ marginBottom: 14 }}>{error || authError}</div>
+            )}
+
+            {/* ── Google sign-in (clients) ──────────────────── */}
+            {onGoogleLogin && (
+              <>
+                <button type="button" onClick={handleGoogle} disabled={googleLoading}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', gap: 10,
+                    background: 'white', border: '1.5px solid #dadce0',
+                    borderRadius: 10, padding: '12px', fontSize: 14.5,
+                    fontWeight: 600, color: '#3c4043',
+                    cursor: googleLoading ? 'default' : 'pointer',
+                    opacity: googleLoading ? 0.6 : 1,
+                  }}
+                  onMouseOver={e => { if (!googleLoading) e.currentTarget.style.background = '#f8f9fa' }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'white' }}>
+                  <GoogleIcon />
+                  {googleLoading ? 'Redirecting to Google…' : 'Continue with Google'}
+                </button>
+
+                <p style={{ fontSize: 11.5, color: '#94a3b8', textAlign: 'center', marginTop: 8, lineHeight: 1.5 }}>
+                  For clients whose CA has registered their Google address
+                </p>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0' }}>
+                  <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+                  <span style={{ fontSize: 11.5, color: '#94a3b8', fontWeight: 600 }}>OR</span>
+                  <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+                </div>
+              </>
+            )}
+
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label htmlFor="m-email">Email</label>
-                <input id="m-email" type="email" className="input" placeholder="your@email.com"
+                <label htmlFor="m-email">Username or Email</label>
+                <input id="m-email" type="text" className="input" placeholder="username or your@email.com"
+                  autoCapitalize="none" autoCorrect="off" spellCheck="false" autoComplete="username"
                   value={email} onChange={e => setEmail(e.target.value)} required autoFocus />
               </div>
               <div className="form-group">
@@ -154,8 +216,8 @@ function LoginModal({ onLogin, onClose }) {
 }
 
 // ── Main landing page ──────────────────────────────────────────
-export default function Login({ onLogin }) {
-  const [showLogin, setShowLogin] = useState(false)
+export default function Login({ onLogin, onGoogleLogin, authError, onClearAuthError }) {
+  const [showLogin, setShowLogin] = useState(authError ? true : false)
 
   const NAVY  = '#0f2557'
   const GOLD  = '#c9922a'
@@ -568,7 +630,15 @@ export default function Login({ onLogin }) {
       </footer>
 
       {/* ── LOGIN MODAL ────────────────────────────────────── */}
-      {showLogin && <LoginModal onLogin={onLogin} onClose={() => setShowLogin(false)} />}
+      {showLogin && (
+        <LoginModal
+          onLogin={onLogin}
+          onGoogleLogin={onGoogleLogin}
+          authError={authError}
+          onClearAuthError={onClearAuthError}
+          onClose={() => { onClearAuthError?.(); setShowLogin(false) }}
+        />
+      )}
 
       <style>{`
         @media (max-width: 640px) {

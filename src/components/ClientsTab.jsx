@@ -25,6 +25,7 @@ function ClientModal({ firmId, client, onClose, onSaved }) {
     type: client?.type ?? 'Individual',
     notes: client?.notes ?? '',
     status: client?.status ?? 'active',
+    portal_google_email: client?.portal_google_email ?? '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState('')
@@ -33,12 +34,26 @@ function ClientModal({ firmId, client, onClose, onSaved }) {
 
   async function save() {
     if (!form.name.trim()) { setError('Name is required'); return }
+
+    // Optional. When present it must look like an address, because a
+    // typo here silently locks the client out of Google sign-in.
+    const gmail = form.portal_google_email.trim().toLowerCase()
+    if (gmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gmail)) {
+      setError('Google sign-in address is not a valid email'); return
+    }
+
     setSaving(true); setError('')
-    const payload = { ...form, firm_id: firmId }
+    const payload = { ...form, firm_id: firmId, portal_google_email: gmail || null }
     const { error: err } = isEdit
       ? await supabase.from('clients').update(payload).eq('id', client.id)
       : await supabase.from('clients').insert(payload)
-    if (err) { setError(err.message); setSaving(false); return }
+    if (err) {
+      // Surface the unique-index violation in plain language.
+      setError(/portal_google_email/.test(err.message)
+        ? 'That Google address is already registered to another client.'
+        : err.message)
+      setSaving(false); return
+    }
     onSaved()
   }
 
@@ -90,6 +105,34 @@ function ClientModal({ firmId, client, onClose, onSaved }) {
               </select>
             </div>
           </div>
+          {/* ── Optional Google sign-in ─────────────────────── */}
+          <div className="form-group" style={{
+            background: '#f8fafc', border: '1px solid #e2e8f0',
+            borderRadius: 10, padding: '14px 16px', marginTop: 4,
+          }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span>Google Sign-In Address</span>
+              <span style={{ fontSize: 10.5, fontWeight: 600, color: '#64748b', background: '#e2e8f0', padding: '2px 7px', borderRadius: 20 }}>
+                OPTIONAL
+              </span>
+            </label>
+            <input className="input" type="email" autoCapitalize="none" spellCheck="false"
+              value={form.portal_google_email}
+              onChange={e => set('portal_google_email', e.target.value.toLowerCase())}
+              placeholder="client.name@gmail.com" />
+            <p style={{ fontSize: 11.5, color: '#64748b', marginTop: 7, lineHeight: 1.55 }}>
+              Enter the client's Google address to let them press <strong>Continue with
+              Google</strong> instead of a portal password. Leave blank and they sign in
+              with their username as usual. This must be the exact address on their Google
+              account — it is not the same as the contact email above.
+            </p>
+            {isEdit && client?.portal_google_email && (
+              <p style={{ fontSize: 11.5, color: '#15803d', marginTop: 6, fontWeight: 600 }}>
+                ✓ Google sign-in enabled for {client.portal_google_email}
+              </p>
+            )}
+          </div>
+
           <div className="form-group">
             <label>Internal Notes (private)</label>
             <textarea className="input" rows={3} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Notes visible only to CA team…" style={{ resize: 'vertical' }} />

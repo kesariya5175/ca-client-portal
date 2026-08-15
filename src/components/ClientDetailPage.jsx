@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import ClientServicesModal from './ClientServicesModal'
+import DocLink from './DocLink'
 import { getFinancialYears } from '../caServices'
 
 const FY_OPTIONS = getFinancialYears()
@@ -200,7 +201,7 @@ function DocumentsTab({ client, firmId }) {
                         <td style={{ padding: '10px 14px' }}><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
                         <td style={{ padding: '10px 14px' }}>
                           {(r.documents ?? []).map(d => (
-                            <a key={d.id} href={d.file_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--brand)', fontSize: 12 }}>📎 {d.file_name}</a>
+                            <DocLink key={d.id} doc={d} />
                           ))}
                           {!(r.documents ?? []).length && <span className="text-muted text-sm">—</span>}
                         </td>
