@@ -10,3 +10,6 @@ dist/
 *credntials*
 *Credentials*
 *.docx
+
+# Vite writes these transient config timestamps on every dev run
+vite.config.js.timestamp-*
